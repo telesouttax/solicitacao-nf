@@ -16,7 +16,7 @@ const initialForm = {
   descricao: "",
 };
 
-function formatCNPJ(value) {
+function formatDocumento(value) {
   return value.replace(/\D/g, "").slice(0, 14);
 }
 
@@ -26,6 +26,7 @@ export default function Home() {
   const [form, setForm] = useState(initialForm);
   const [buscando, setBuscando] = useState(null); // "solicitante" | "destinatario" | null
   const [erroBusca, setErroBusca] = useState("");
+  const [avisoBusca, setAvisoBusca] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [resultado, setResultado] = useState(null); // "sucesso" | "erro" | null
   const [erroEnvio, setErroEnvio] = useState("");
@@ -35,19 +36,26 @@ export default function Home() {
   }
 
   async function buscarCNPJ(alvo) {
-    const campoCnpj = alvo === "solicitante" ? "solicitante_cnpj" : "destinatario_cnpj";
-    const cnpj = formatCNPJ(form[campoCnpj]);
+    const campoDocumento = alvo === "solicitante" ? "solicitante_cnpj" : "destinatario_cnpj";
+    const documento = formatDocumento(form[campoDocumento]);
 
-    if (cnpj.length !== 14) {
-      setErroBusca("Digite um CNPJ com 14 dígitos.");
+    setErroBusca("");
+    setAvisoBusca("");
+
+    if (documento.length !== 11 && documento.length !== 14) {
+      setErroBusca("Digite um CPF (11 dígitos) ou CNPJ (14 dígitos) válido.");
       return;
     }
 
-    setErroBusca("");
+    if (documento.length === 11) {
+      setAvisoBusca("CPF não pode ser consultado automaticamente. Preencha o nome manualmente abaixo.");
+      return;
+    }
+
     setBuscando(alvo);
 
     try {
-      const resp = await fetch(`/api/cnpj?cnpj=${cnpj}`);
+      const resp = await fetch(`/api/cnpj?cnpj=${documento}`);
       const dados = await resp.json();
 
       if (!resp.ok) {
@@ -180,12 +188,12 @@ export default function Home() {
         {step === 1 && (
           <div className={styles.form}>
             <label className={styles.label}>
-              CNPJ da sua empresa
+              CNPJ ou CPF da sua empresa
               <div className={styles.inlineGroup}>
                 <input
                   className={styles.input}
                   value={form.solicitante_cnpj}
-                  onChange={(e) => atualizarCampo("solicitante_cnpj", formatCNPJ(e.target.value))}
+                  onChange={(e) => atualizarCampo("solicitante_cnpj", formatDocumento(e.target.value))}
                   placeholder="Somente números"
                   inputMode="numeric"
                 />
@@ -241,6 +249,7 @@ export default function Home() {
             </label>
 
             {erroBusca && <p className={styles.errorText}>{erroBusca}</p>}
+            {avisoBusca && <p className={styles.helperText}>{avisoBusca}</p>}
 
             <button type="button" className={styles.buttonPrimary} onClick={avancarParaPergunta}>
               Continuar
@@ -272,12 +281,12 @@ export default function Home() {
             {paraSiMesmo === false && (
               <>
                 <label className={styles.label}>
-                  CNPJ do cliente que receberá a nota
+                  CNPJ ou CPF do cliente que receberá a nota
                   <div className={styles.inlineGroup}>
                     <input
                       className={styles.input}
                       value={form.destinatario_cnpj}
-                      onChange={(e) => atualizarCampo("destinatario_cnpj", formatCNPJ(e.target.value))}
+                      onChange={(e) => atualizarCampo("destinatario_cnpj", formatDocumento(e.target.value))}
                       placeholder="Somente números"
                       inputMode="numeric"
                     />
@@ -343,6 +352,7 @@ export default function Home() {
             </label>
 
             {erroBusca && <p className={styles.errorText}>{erroBusca}</p>}
+            {avisoBusca && <p className={styles.helperText}>{avisoBusca}</p>}
             {erroEnvio && <p className={styles.errorText}>{erroEnvio}</p>}
 
             <div className={styles.inlineGroup}>
