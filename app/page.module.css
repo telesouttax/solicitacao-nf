@@ -130,6 +130,24 @@
   cursor: not-allowed;
 }
 
+.helperText {
+  font-size: 14px;
+  color: var(--ink);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.linkButton {
+  background: none;
+  border: none;
+  color: var(--teal);
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+  align-self: flex-start;
+  padding: 0;
+}
+
 .errorText {
   background: var(--danger-bg);
   color: var(--danger);
