@@ -1,0 +1,48 @@
+:root {
+  --ink: #16302c;
+  --teal: #0f4c4c;
+  --teal-dark: #0a3535;
+  --paper: #f7f5ef;
+  --card: #ffffff;
+  --line: #dcd7c9;
+  --gold: #b8863f;
+  --gold-dark: #8f6529;
+  --danger: #b3432f;
+  --danger-bg: #fbebe7;
+  --success: #2f6b4f;
+  --success-bg: #e9f3ec;
+  --muted: #6b6a63;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+h1,
+h2,
+h3 {
+  font-family: "Lora", serif;
+  font-weight: 600;
+  color: var(--teal-dark);
+  margin: 0;
+}
+
+button {
+  font-family: inherit;
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: 15px;
+}
