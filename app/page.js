@@ -21,7 +21,8 @@ function formatCNPJ(value) {
 }
 
 export default function Home() {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(1); // 1 identificação, 2 pergunta destinatário, 3 dados do serviço
+  const [paraSiMesmo, setParaSiMesmo] = useState(null); // true | false | null
   const [form, setForm] = useState(initialForm);
   const [buscando, setBuscando] = useState(null); // "solicitante" | "destinatario" | null
   const [erroBusca, setErroBusca] = useState("");
@@ -67,7 +68,7 @@ export default function Home() {
     }
   }
 
-  function avancar() {
+  function avancarParaPergunta() {
     if (
       !form.solicitante_cnpj ||
       !form.solicitante_razao_social ||
@@ -80,6 +81,21 @@ export default function Home() {
     }
     setErroBusca("");
     setStep(2);
+  }
+
+  function escolherDestino(paraSi) {
+    setParaSiMesmo(paraSi);
+    if (paraSi) {
+      setForm((prev) => ({
+        ...prev,
+        destinatario_cnpj: prev.solicitante_cnpj,
+        destinatario_razao_social: prev.solicitante_razao_social,
+      }));
+    } else {
+      setForm((prev) => ({ ...prev, destinatario_cnpj: "", destinatario_razao_social: "" }));
+    }
+    setErroBusca("");
+    setStep(3);
   }
 
   async function enviarSolicitacao(e) {
@@ -127,6 +143,7 @@ export default function Home() {
             className={styles.buttonSecondary}
             onClick={() => {
               setForm(initialForm);
+              setParaSiMesmo(null);
               setStep(1);
               setResultado(null);
             }}
@@ -138,16 +155,26 @@ export default function Home() {
     );
   }
 
+  const titulos = {
+    1: "Identifique sua empresa",
+    2: "Para quem é esta nota?",
+    3: "Dados do serviço prestado",
+  };
+
   return (
     <main className={styles.main}>
       <div className={styles.card}>
         <div className={styles.eyebrow}>Solicitação de nota fiscal · NFS-e</div>
-        <h1>{step === 1 ? "Identifique sua empresa" : "Dados do serviço prestado"}</h1>
+        <h1>{titulos[step]}</h1>
 
         <div className={styles.steps}>
           <span className={step === 1 ? styles.stepActive : styles.stepDone}>1. Identificação</span>
           <span className={styles.stepDivider}>—</span>
-          <span className={step === 2 ? styles.stepActive : styles.stepPending}>2. Serviço</span>
+          <span className={step === 2 ? styles.stepActive : step > 2 ? styles.stepDone : styles.stepPending}>
+            2. Destinatário
+          </span>
+          <span className={styles.stepDivider}>—</span>
+          <span className={step === 3 ? styles.stepActive : styles.stepPending}>3. Serviço</span>
         </div>
 
         {step === 1 && (
@@ -215,44 +242,73 @@ export default function Home() {
 
             {erroBusca && <p className={styles.errorText}>{erroBusca}</p>}
 
-            <button type="button" className={styles.buttonPrimary} onClick={avancar}>
+            <button type="button" className={styles.buttonPrimary} onClick={avancarParaPergunta}>
               Continuar
             </button>
           </div>
         )}
 
         {step === 2 && (
-          <form className={styles.form} onSubmit={enviarSolicitacao}>
-            <label className={styles.label}>
-              CNPJ do cliente que receberá a nota
-              <div className={styles.inlineGroup}>
-                <input
-                  className={styles.input}
-                  value={form.destinatario_cnpj}
-                  onChange={(e) => atualizarCampo("destinatario_cnpj", formatCNPJ(e.target.value))}
-                  placeholder="Somente números"
-                  inputMode="numeric"
-                />
-                <button
-                  type="button"
-                  className={styles.buttonSecondary}
-                  onClick={() => buscarCNPJ("destinatario")}
-                  disabled={buscando === "destinatario"}
-                >
-                  {buscando === "destinatario" ? "Buscando..." : "Buscar"}
-                </button>
-              </div>
-            </label>
+          <div className={styles.form}>
+            <p className={styles.helperText}>
+              Esta nota fiscal é para a sua própria empresa, ou para um cliente seu?
+            </p>
+            <div className={styles.inlineGroup}>
+              <button type="button" className={styles.buttonPrimary} onClick={() => escolherDestino(true)}>
+                É para mim mesmo
+              </button>
+              <button type="button" className={styles.buttonSecondary} onClick={() => escolherDestino(false)}>
+                É para outro cliente
+              </button>
+            </div>
+            <button type="button" className={styles.linkButton} onClick={() => setStep(1)}>
+              Voltar
+            </button>
+          </div>
+        )}
 
-            <label className={styles.label}>
-              Razão social do cliente
-              <input
-                className={styles.input}
-                value={form.destinatario_razao_social}
-                onChange={(e) => atualizarCampo("destinatario_razao_social", e.target.value)}
-                placeholder="Preenchido automaticamente após a busca"
-              />
-            </label>
+        {step === 3 && (
+          <form className={styles.form} onSubmit={enviarSolicitacao}>
+            {paraSiMesmo === false && (
+              <>
+                <label className={styles.label}>
+                  CNPJ do cliente que receberá a nota
+                  <div className={styles.inlineGroup}>
+                    <input
+                      className={styles.input}
+                      value={form.destinatario_cnpj}
+                      onChange={(e) => atualizarCampo("destinatario_cnpj", formatCNPJ(e.target.value))}
+                      placeholder="Somente números"
+                      inputMode="numeric"
+                    />
+                    <button
+                      type="button"
+                      className={styles.buttonSecondary}
+                      onClick={() => buscarCNPJ("destinatario")}
+                      disabled={buscando === "destinatario"}
+                    >
+                      {buscando === "destinatario" ? "Buscando..." : "Buscar"}
+                    </button>
+                  </div>
+                </label>
+
+                <label className={styles.label}>
+                  Razão social do cliente
+                  <input
+                    className={styles.input}
+                    value={form.destinatario_razao_social}
+                    onChange={(e) => atualizarCampo("destinatario_razao_social", e.target.value)}
+                    placeholder="Preenchido automaticamente após a busca"
+                  />
+                </label>
+              </>
+            )}
+
+            {paraSiMesmo === true && (
+              <p className={styles.helperText}>
+                Nota destinada à sua própria empresa: {form.destinatario_razao_social || form.destinatario_cnpj}
+              </p>
+            )}
 
             <label className={styles.label}>
               Valor do serviço (R$)
@@ -290,7 +346,7 @@ export default function Home() {
             {erroEnvio && <p className={styles.errorText}>{erroEnvio}</p>}
 
             <div className={styles.inlineGroup}>
-              <button type="button" className={styles.buttonSecondary} onClick={() => setStep(1)}>
+              <button type="button" className={styles.buttonSecondary} onClick={() => setStep(2)}>
                 Voltar
               </button>
               <button type="submit" className={styles.buttonPrimary} disabled={enviando}>
